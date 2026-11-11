@@ -64,7 +64,7 @@
   "gap_max": {
     "1_WIND": 40,
     "2_CO2": 80,
-    "4_ETF": 50
+    "4_ETF": 100
   },
   "gap_cap": 30,
   "gap_size": {
@@ -87,5 +87,6 @@
     "3_FLOW": 1.0,
     "4_ETF": 1.0,
     "5_WIND_RANGE": 2.0
-  }
+  },
+  "endgame_etf_cap": 60
 }
