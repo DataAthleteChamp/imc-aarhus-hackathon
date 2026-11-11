@@ -32,6 +32,7 @@ PRODUCTS = ['1_WIND', '2_CO2', '3_FLOW', '4_ETF', '5_WIND_RANGE']
 LEGS = ['1_WIND', '2_CO2', '3_FLOW']
 DEFAULTS = {'mm_enabled': True, 'quote_edge_k': 0.5, 'ladder_step': 0.25, 'skew_k': 0.5,
             'arb_edge': 6, 'arb_enabled': True, 'mm_size': 5, 'take_cooldown': 0.5,
+            'release_from_sec': 50, 'release_to_sec': 25, 'release_widen': 2.0,
             'mm_mode': 'spread', 'alpha_k': 0.5, 'spread_skew': 1.0,
             'mm_min_half': {'1_WIND': 2, '2_CO2': 4, '3_FLOW': 5, '4_ETF': 6, '5_WIND_RANGE': 2},
             'etf_max_pos': 40, 'etf_model_from': '17:30', 'etf_nav_sigma': 12,
@@ -367,11 +368,18 @@ class Bot2(BaseBot):
         mid = (bb + ba) / 2
         center = fair if prod == '4_ETF' and sig < 50 else mid     # ETF: iNAV-based fair
         mh = p['mm_min_half'][prod]
+        # adverse selection (Glosten-Milgrom): informed flow clusters around the Energinet publish
+        # window (sec ~50 -> ~25 of next minute) -> widen there
+        sec = datetime.now(TZ).second
+        if sec >= p['release_from_sec'] or sec < p['release_to_sec']:
+            mh *= p['release_widen']
+        # only penny when the spread is wide enough to keep >= min_half each side; else join best
+        penny = tick if (ba - bb) >= 2 * mh + 2 * tick else 0
         target = max(-lim, min(lim, lim * p['alpha_k'] * (fair - center) / max(sig, 1)))
         dev = (pos - target) / lim                       # >0: too long vs target -> lean to sell
         c = center - p['spread_skew'] * max(mh, (ba - bb) / 2) * dev
-        b1 = min(bb + tick, rt(c - mh, True), ba - tick)
-        a1 = max(ba - tick, rt(c + mh, False), bb + tick)
+        b1 = min(bb + penny, rt(c - mh, True), ba - tick)
+        a1 = max(ba - penny, rt(c + mh, False), bb + tick)
         b1 = min(b1, rt(fair + 0.25 * sig, True))          # never pay well above long-term fair
         a1 = max(a1, rt(fair - 0.25 * sig, False), rt(self.sell_floor(prod), False))
         size = p['mm_size']
