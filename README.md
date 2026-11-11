@@ -22,7 +22,7 @@
 | | |
 |---|---|
 | **Jakub Piotrowski** | [![LinkedIn](https://img.shields.io/badge/LinkedIn-jakub--piotrowski97-0A66C2?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/jakub-piotrowski97/) |
-| **Teammate** | [![LinkedIn](https://img.shields.io/badge/LinkedIn-semikiina-0A66C2?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/semikiina/) |
+| **Cristina Semikina** | [![LinkedIn](https://img.shields.io/badge/LinkedIn-semikiina-0A66C2?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/semikiina/) |
 
 ---
 
