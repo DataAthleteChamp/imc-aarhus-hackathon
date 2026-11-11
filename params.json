@@ -32,5 +32,10 @@
   "model": "research",
   "_note2": "model=research uses research/*/model_*.py (drift already inside); drift_per_hour only used when model=baseline",
   "_backtest": "15:35 hybrid (research WIND/CO2, baseline FLOW drift 90) since 25 Oct: mean +29k/day, all products positive mean, 11.8% losing days",
-  "take_cooldown": 0.2
+  "take_cooldown": 0.2,
+  "mm_mode": "spread",
+  "alpha_k": 0.0,
+  "spread_skew": 1.0,
+  "mm_size": 5,
+  "_mode": "16:10 PURE MARKET MAKING (alpha_k=0). Set alpha_k 0.5+ later for settlement positioning"
 }

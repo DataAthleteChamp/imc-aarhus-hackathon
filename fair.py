@@ -145,7 +145,13 @@ def compute_fair(now=None):
             ff, sf = MFC.flow_fair(rows, now)
             rf, rs, rfloor = MW.range_fair(rows, now)
             fair.update({'1_WIND': fw + adj['1_WIND'], '2_CO2': fc + adj['2_CO2'],
-                         '5_WIND_RANGE': rf + adj['5_WIND_RANGE']})  # 3_FLOW: baseline+drift (won backtest)
+                         '5_WIND_RANGE': rf + adj['5_WIND_RANGE']})
+            # 3_FLOW: blend baseline time-of-day drift (won backtest) with research mean-reversion
+            # model (reacts to today's level). Disagreement between them widens sigma.
+            wb = p.get('flow_blend', 0.5)
+            fb, sb = fair['3_FLOW'], sigma['3_FLOW']
+            fair['3_FLOW'] = wb * fb + (1 - wb) * (ff + adj['3_FLOW'])
+            sigma['3_FLOW'] = max(sb, sf * p['sigma_mult']) + abs(fb - ff) * 0.25
             fair['4_ETF'] = fair['1_WIND'] + fair['2_CO2'] + fair['3_FLOW'] + adj['4_ETF']
             sm = p['sigma_mult']
             sigma.update({'1_WIND': sw * sm, '2_CO2': sc * sm,
@@ -172,7 +178,10 @@ def compute_fair(now=None):
                     p['min_take_edge'] = {**p['min_take_edge'], **me}
         except Exception as e:
             print('endgame model failed:', repr(e))
-    return {'fair': fair, 'sigma': sigma, 'range_floor': floor,
+    lr = rows[-1]
+    actual = {'1_WIND': lr['1_WIND'], '2_CO2': lr['2_CO2'], '3_FLOW': lr['3_FLOW'],
+              '4_ETF': lr['1_WIND'] + lr['2_CO2'] + lr['3_FLOW'], '5_WIND_RANGE': floor}
+    return {'fair': fair, 'sigma': sigma, 'range_floor': floor, 'actual': actual,
             'data_time': rows[-1]['t'].strftime('%H:%M'), 'mins_left': mins_left, 'params': p}
 
 

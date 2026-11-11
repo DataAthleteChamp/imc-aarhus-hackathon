@@ -32,6 +32,8 @@ PRODUCTS = ['1_WIND', '2_CO2', '3_FLOW', '4_ETF', '5_WIND_RANGE']
 LEGS = ['1_WIND', '2_CO2', '3_FLOW']
 DEFAULTS = {'mm_enabled': True, 'quote_edge_k': 0.5, 'ladder_step': 0.25, 'skew_k': 0.5,
             'arb_edge': 6, 'arb_enabled': True, 'mm_size': 5, 'take_cooldown': 0.5,
+            'mm_mode': 'spread', 'alpha_k': 0.5, 'spread_skew': 1.0,
+            'mm_min_half': {'1_WIND': 2, '2_CO2': 4, '3_FLOW': 5, '4_ETF': 6, '5_WIND_RANGE': 2},
             'etf_max_pos': 40, 'etf_model_from': '17:30', 'etf_nav_sigma': 12,
             'nav_max_spread': {'1_WIND': 25, '2_CO2': 50, '3_FLOW': 60},
             'quote_throttle': 1.0, 'jump_k': 0.3, 'anchor_k': 0.1}
@@ -310,6 +312,8 @@ class Bot2(BaseBot):
             n = x / tick
             return (int(n) if down else -int(-n)) * tick
 
+        if p.get('mm_mode') == 'spread':
+            return self._spread_quotes(prod, ob, fair, sig, pos, lim, tick, rt)
         out = []
         # bids
         b1 = rt(fs - edge, True)
@@ -342,6 +346,39 @@ class Bot2(BaseBot):
         for s, px, v in out:
             m = next((o for o in live if o.side == s and o.price == px and v / 2 <= o.volume <= v), None)
             res.append((s, px, m.volume if m else v))
+        return res
+
+    def _spread_quotes(self, prod, ob, fair, sig, pos, lim, tick, rt):
+        """Industry two-layer MM: long-term model sets a TARGET inventory; quotes sit tight around
+        the short-term reference (book mid / iNAV) to earn the spread; skew pulls pos toward target."""
+        p = self.p()
+        bids, asks = self._levels(ob)
+        if not bids or not asks:
+            return []
+        bb, ba = bids[0][0], asks[0][0]
+        mid = (bb + ba) / 2
+        center = fair if prod == '4_ETF' and sig < 50 else mid     # ETF: iNAV-based fair
+        mh = p['mm_min_half'][prod]
+        target = max(-lim, min(lim, lim * p['alpha_k'] * (fair - center) / max(sig, 1)))
+        dev = (pos - target) / lim                       # >0: too long vs target -> lean to sell
+        c = center - p['spread_skew'] * max(mh, (ba - bb) / 2) * dev
+        b1 = min(bb + tick, rt(c - mh, True), ba - tick)
+        a1 = max(ba - tick, rt(c + mh, False), bb + tick)
+        b1 = min(b1, rt(fair + 0.25 * sig, True))          # never pay well above long-term fair
+        a1 = max(a1, rt(fair - 0.25 * sig, False), rt(self.sell_floor(prod), False))
+        size = p['mm_size']
+        bsz = size if pos < target else max(1, int(round(size * max(0.0, 1 - abs(dev)))))
+        asz = size if pos > target else max(1, int(round(size * max(0.0, 1 - abs(dev)))))
+        out = []
+        if pos + bsz <= lim and b1 > 0:
+            out.append(('BUY', int(b1), int(bsz)))
+        if pos - asz >= -lim:
+            out.append(('SELL', int(a1), int(asz)))
+        live = self.om.orders(prod)
+        res = []
+        for s_, px, v in out:
+            m = next((o for o in live if o.side == s_ and o.price == px and v / 2 <= o.volume <= v), None)
+            res.append((s_, px, m.volume if m else v))
         return res
 
     def requote(self, prod, pull_side=None):
@@ -396,6 +433,22 @@ class Bot2(BaseBot):
             ba = ob.sell_orders[0].price if ob and ob.sell_orders else None
             log(f"  {prod:13s} fair {m['fair'][prod]:7.1f} ±{m['sigma'][prod]:5.1f}  book {bb!s:>6} / {ba!s:<6} "
                   f"pos {self.om.position(prod):>4}  orders {len(self.om.orders(prod))}")
+        # prediction tracker: one row per product per status tick -> data/predictions.csv
+        try:
+            f = Path(__file__).with_name('data') / 'predictions.csv'
+            new = not f.exists()
+            with f.open('a') as fh:
+                if new:
+                    fh.write('ts,data_time,product,actual,fair,sigma,bid,ask,pos\n')
+                actual = m.get('actual', {})
+                for prod in PRODUCTS:
+                    ob = self.books.get(prod)
+                    bb = ob.buy_orders[0].price if ob and ob.buy_orders else ''
+                    ba = ob.sell_orders[0].price if ob and ob.sell_orders else ''
+                    fh.write(f"{ts()},{m['data_time']},{prod},{actual.get(prod, '')},{m['fair'][prod]:.1f},"
+                             f"{m['sigma'][prod]:.1f},{bb},{ba},{self.om.position(prod)}\n")
+        except Exception as e:
+            log('tracker error', repr(e))
 
 
 def main():
