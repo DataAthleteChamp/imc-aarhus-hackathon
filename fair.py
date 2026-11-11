@@ -171,7 +171,8 @@ def compute_fair(now=None):
             for prod in PRODUCTS:
                 if prod in eg:
                     fair[prod] = eg[prod][0] + adj.get(prod, 0.0)
-                    sigma[prod] = max(eg[prod][1], 0.5)
+                    # calibration (research/yesterday/calib.py, 12 days): CO2/ETF overconfident near 17:40
+                    sigma[prod] = max(eg[prod][1], 0.5) * p.get('endgame_sigma_mult', {}).get(prod, 1.0)
             floor = eg.get('_range_floor', floor)
             p = dict(p)
             hm = now.hour * 60 + now.minute
