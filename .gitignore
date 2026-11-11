@@ -6,3 +6,5 @@ logs/
 data/*.json
 __pycache__/
 nohup.out
+data/*.jsonl
+data/*.csv

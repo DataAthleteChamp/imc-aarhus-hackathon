@@ -155,6 +155,14 @@ class Bot2(BaseBot):
     # ----------------------------------------------------------- book events
     def on_orderbook(self, ob):
         self.books[ob.product] = ob
+        try:  # record top-5 book for MM replay backtests (data/books.jsonl)
+            if not hasattr(self, '_rec'):
+                self._rec = (Path(__file__).with_name('data') / 'books.jsonl').open('a', buffering=1)
+            self._rec.write(json.dumps({'ts': time.time(), 'p': ob.product,
+                'b': [[o.price, o.volume, o.own_volume] for o in ob.buy_orders[:5]],
+                'a': [[o.price, o.volume, o.own_volume] for o in ob.sell_orders[:5]]}) + '\n')
+        except Exception:
+            pass
         if self.model is None:
             return
         prod = ob.product
