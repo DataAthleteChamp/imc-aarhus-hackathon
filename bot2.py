@@ -151,6 +151,8 @@ class Bot2(BaseBot):
 
     def lim(self, prod):
         p = self.p()
+        if prod in p.get('max_pos_override', {}):
+            return max(p['max_pos_override'][prod], p['max_pos'] if prod != '4_ETF' else 0)
         return p['etf_max_pos'] if prod == '4_ETF' else p['max_pos']
 
     def sell_floor(self, prod):
@@ -214,7 +216,8 @@ class Bot2(BaseBot):
         if val is None:
             return False
         bids, asks = self._levels(ob)
-        pos, cap, sz = self.om.position(prod), p['gap_cap'], p['gap_size']
+        gs = p['gap_size']
+        pos, cap, sz = self.om.position(prod), p['gap_cap'], (gs.get(prod, 3) if isinstance(gs, dict) else gs)
         gmax = p['gap_max'].get(prod, 1e9)
         side = None
         if asks and thr < val - asks[0][0] < gmax and pos < cap:

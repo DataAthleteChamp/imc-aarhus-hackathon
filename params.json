@@ -39,7 +39,7 @@
   "alpha_k": 0.0,
   "spread_skew": 1.0,
   "mm_size": 2,
-  "_mode": "16:32 gap-taker (live stats + 47d backtest A-peek 0% losing days; FLOW off) + risk-off MM cap 10; endgame 17:20 capped 50",
+  "_mode": "16:57 CO2 gap size 10 (wave4: lag1 +889/day); FLOW hold 36 to endgame (cap 40, wave4: hold EV 4x sell); ETF flatten",
   "mm_min_half": {
     "1_WIND": 6,
     "2_CO2": 8,
@@ -63,11 +63,18 @@
     "4_ETF": 50
   },
   "gap_cap": 30,
-  "gap_size": 3,
+  "gap_size": {
+    "1_WIND": 3,
+    "2_CO2": 10,
+    "4_ETF": 3
+  },
   "gap_cooldown": 3.0,
   "etf_max_pos": 10,
   "endgame_sigma_mult": {
     "2_CO2": 1.4,
     "4_ETF": 1.4
+  },
+  "max_pos_override": {
+    "3_FLOW": 40
   }
 }
