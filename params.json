@@ -8,7 +8,7 @@
     "2_CO2": 8,
     "3_FLOW": 8,
     "4_ETF": 12,
-    "5_WIND_RANGE": 1
+    "5_WIND_RANGE": 3
   },
   "take_clip": 30,
   "quote_k": 1.5,
