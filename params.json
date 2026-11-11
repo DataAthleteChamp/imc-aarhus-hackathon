@@ -1,0 +1,32 @@
+{
+  "_note": "Hot-reloaded every cycle. Edit while the bot runs. drift_per_hour = expected change per hour until 17:40 (product units).",
+  "trading_enabled": true,
+  "max_pos": 90,
+  "take_k": 1.0,
+  "min_take_edge": {
+    "1_WIND": 4,
+    "2_CO2": 8,
+    "3_FLOW": 8,
+    "4_ETF": 12,
+    "5_WIND_RANGE": 3
+  },
+  "take_clip": 10,
+  "quote_k": 1.5,
+  "quote_size": 3,
+  "sigma_mult": 1.5,
+  "range_vol_mult": 1.6,
+  "drift_per_hour": {
+    "1_WIND": 2,
+    "2_CO2": 0,
+    "3_FLOW": 60
+  },
+  "manual_adj": {
+    "1_WIND": 0,
+    "2_CO2": 0,
+    "3_FLOW": 0,
+    "4_ETF": 0,
+    "5_WIND_RANGE": 0
+  },
+  "disabled_products": [],
+  "_research": "15:12 research: FLOW imports rise into evening (+150 to settle, strongest signal); WIND/CO2 no drift; wind forecast badly low today; range right-skewed, median settle ~113 mean ~180 -> do not short range cheaply"
+}
