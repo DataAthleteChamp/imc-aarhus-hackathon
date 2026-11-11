@@ -8,7 +8,7 @@
     "2_CO2": 8,
     "3_FLOW": 8,
     "4_ETF": 12,
-    "5_WIND_RANGE": 3
+    "5_WIND_RANGE": 1
   },
   "take_clip": 30,
   "quote_k": 1.5,
@@ -41,15 +41,15 @@
     "2_CO2": 3,
     "3_FLOW": 5,
     "4_ETF": 5,
-    "5_WIND_RANGE": 3
+    "5_WIND_RANGE": 5
   },
-  "_mode": "17:20 endgame: take_clip 30 so the final known-minute mispricings get swept fast (cap 98)",
+  "_mode": "17:33 range locked (wind needs -77/+98 in 13min, sd 2.5/min): sell range down to floor+1",
   "mm_min_half": {
     "1_WIND": 3,
     "2_CO2": 8,
     "3_FLOW": 9,
     "4_ETF": 7,
-    "5_WIND_RANGE": 6
+    "5_WIND_RANGE": 1
   },
   "_mm_research": "16:15 markout: pizzatrading informed (+18/u at 60s), trades in Energinet publish window; house_mm noise. min_half/size per research, widen x2 sec 50..25, penny only if spread>=2*min_half, take_k 3 (our takes lost -20/u)",
   "guard_k": null,
@@ -86,7 +86,7 @@
     "2_CO2": 2.0,
     "3_FLOW": 1.0,
     "4_ETF": 1.0,
-    "5_WIND_RANGE": 2.0
+    "5_WIND_RANGE": 1.0
   },
   "endgame_etf_cap": 60
 }
