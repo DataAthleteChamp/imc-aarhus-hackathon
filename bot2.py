@@ -36,6 +36,7 @@ DEFAULTS = {'mm_enabled': True, 'quote_edge_k': 0.5, 'ladder_step': 0.25, 'skew_
             'center_actual_w': {'1_WIND': 0.6, '2_CO2': 0.7, '3_FLOW': 0.6, '4_ETF': 0.6}, 'center_max_shift': 30,
             'gap_enabled': True, 'gap_thr': {'1_WIND': 5, '2_CO2': 10, '4_ETF': 20},
             'gap_max': {'4_ETF': 50, '2_CO2': 80, '1_WIND': 40}, 'gap_cap': 20, 'gap_size': 3, 'gap_cooldown': 3.0,
+            'mm_stop_at': '17:43',
             'mm_mode': 'spread', 'alpha_k': 0.5, 'spread_skew': 1.0,
             'mm_min_half': {'1_WIND': 2, '2_CO2': 4, '3_FLOW': 5, '4_ETF': 6, '5_WIND_RANGE': 2},
             'etf_max_pos': 40, 'etf_model_from': '17:30', 'etf_nav_sigma': 12,
@@ -227,7 +228,24 @@ class Bot2(BaseBot):
         self.last_quote[prod] = 0
         return True
 
+    def _range_riskless(self, prod):
+        """WIND_RANGE can only go up: any ask below the realised floor is a free lunch."""
+        ob, p = self.books.get(prod), self.p()
+        if prod != '5_WIND_RANGE' or ob is None or not p['trading_enabled']:
+            return
+        if time.time() - self.last_gap.get('RANGE', 0) < 1.0:
+            return
+        floor = self.model['range_floor']
+        bids, asks = self._levels(ob)
+        pos, lim = self.om.position(prod), 98
+        vol = sum(v for px, v in asks if px < floor - 1)
+        if asks and vol and pos < lim:
+            px = max(px for px, v in asks if px < floor - 1)
+            self.last_gap['RANGE'] = time.time()
+            self._do_take(prod, 'BUY', px, min(vol, lim - pos, 20), f'RANGE<FLOOR({floor:.1f})')
+
     def _on_book(self, prod):
+        self._range_riskless(prod)
         self._gap_take(prod)
         if not self.enabled(prod):
             return
@@ -332,6 +350,8 @@ class Bot2(BaseBot):
         p = self.p()
         ob = self.books.get(prod)
         if ob is None or not p['mm_enabled'] or not self.enabled(prod):
+            return []
+        if datetime.now(TZ).strftime('%H:%M') >= p['mm_stop_at']:  # no resting quotes into the close
             return []
         fair, sig = self.fair_sigma(prod)
         if sig > 1e8:
