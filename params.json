@@ -13,7 +13,7 @@
   "take_clip": 10,
   "quote_k": 1.5,
   "quote_size": 3,
-  "sigma_mult": 1.5,
+  "sigma_mult": 1.0,
   "range_vol_mult": 1.6,
   "drift_per_hour": {
     "1_WIND": 2,
@@ -25,8 +25,10 @@
     "2_CO2": 0,
     "3_FLOW": 0,
     "4_ETF": 0,
-    "5_WIND_RANGE": 40
+    "5_WIND_RANGE": 0
   },
   "disabled_products": [],
-  "_research": "15:12 research: FLOW imports rise into evening (+150 to settle, strongest signal); WIND/CO2 no drift; wind forecast badly low today; range right-skewed, median settle ~113 mean ~180 -> do not short range cheaply"
+  "_research": "15:12 research: FLOW imports rise into evening (+150 to settle, strongest signal); WIND/CO2 no drift; wind forecast badly low today; range right-skewed, median settle ~113 mean ~180 -> do not short range cheaply",
+  "model": "research",
+  "_note2": "model=research uses research/*/model_*.py (drift already inside); drift_per_hour only used when model=baseline"
 }

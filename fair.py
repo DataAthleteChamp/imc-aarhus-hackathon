@@ -10,12 +10,18 @@ from pathlib import Path
 from statistics import mean
 from zoneinfo import ZoneInfo
 
+import sys
+
 import numpy as np
 import requests
 
 TZ = ZoneInfo('Europe/Copenhagen')
 API = 'https://api.energidataservice.dk/dataset/PowerSystemRightNow'
 PARAMS_FILE = Path(__file__).with_name('params.json')
+_HERE = Path(__file__).parent
+sys.path[:0] = [str(_HERE / 'research' / 'wind'), str(_HERE / 'research' / 'flow_co2')]
+import model_flow_co2 as MFC  # noqa: E402
+import model_wind as MW  # noqa: E402
 PRODUCTS = ['1_WIND', '2_CO2', '3_FLOW', '4_ETF', '5_WIND_RANGE']
 # typical 15-min move per product (player guide)
 TYPICAL_15 = {'1_WIND': 14, '2_CO2': 24, '3_FLOW': 31, '4_ETF': 41, '5_WIND_RANGE': 5.7}
@@ -50,7 +56,7 @@ def fetch_rows(now):
 
 
 def _fetch_rows(now):
-    start = min(today_at(15, 0, now), now - timedelta(hours=1)).astimezone(ZoneInfo('UTC'))
+    start = min(today_at(14, 0, now), now - timedelta(hours=1)).astimezone(ZoneInfo('UTC'))
     r = requests.get(API, timeout=20, params={
         'start': start.strftime('%Y-%m-%dT%H:%M'), 'limit': 0, 'sort': 'Minutes1UTC asc',
         'columns': 'Minutes1DK,CO2Emission,OffshoreWindPower,OnshoreWindPower,Exchange_Sum'})
@@ -116,6 +122,22 @@ def compute_fair(now=None):
         floor = hmax - hmin
     else:
         fair['5_WIND_RANGE'], sigma['5_WIND_RANGE'], floor = 0.0, 99.0, 0.0
+    if p.get('model', 'research') == 'research':
+        try:
+            adj = p['manual_adj']
+            fw, sw = MW.wind_fair(rows, now)
+            fc, sc = MFC.co2_fair(rows, now)
+            ff, sf = MFC.flow_fair(rows, now)
+            rf, rs, rfloor = MW.range_fair(rows, now)
+            fair.update({'1_WIND': fw + adj['1_WIND'], '2_CO2': fc + adj['2_CO2'],
+                         '3_FLOW': ff + adj['3_FLOW'], '5_WIND_RANGE': rf + adj['5_WIND_RANGE']})
+            fair['4_ETF'] = fair['1_WIND'] + fair['2_CO2'] + fair['3_FLOW'] + adj['4_ETF']
+            sm = p['sigma_mult']
+            sigma.update({'1_WIND': sw * sm, '2_CO2': sc * sm, '3_FLOW': sf * sm,
+                          '4_ETF': MFC.etf_sigma(sw, sc, sf, now) * sm, '5_WIND_RANGE': max(rs, 1.0) * sm})
+            floor = rfloor
+        except Exception as e:
+            print('research model failed, using baseline:', repr(e))
     return {'fair': fair, 'sigma': sigma, 'range_floor': floor,
             'data_time': rows[-1]['t'].strftime('%H:%M'), 'mins_left': mins_left, 'params': p}
 
