@@ -41,7 +41,7 @@
     "2_CO2": 3,
     "3_FLOW": 5,
     "4_ETF": 5,
-    "5_WIND_RANGE": 5
+    "5_WIND_RANGE": 15
   },
   "_mode": "17:33 range locked (wind needs -77/+98 in 13min, sd 2.5/min): sell range down to floor+1",
   "mm_min_half": {
@@ -79,7 +79,8 @@
     "4_ETF": 1.4
   },
   "max_pos_override": {
-    "3_FLOW": 40
+    "3_FLOW": 40,
+    "5_WIND_RANGE": 80
   },
   "release_widen": {
     "1_WIND": 1.0,
