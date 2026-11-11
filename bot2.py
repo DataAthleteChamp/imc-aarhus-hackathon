@@ -452,6 +452,8 @@ class Bot2(BaseBot):
         a1 = max(a1, rt(self.sell_floor(prod), False))
         if prod == '5_WIND_RANGE':  # no nowcast for range: never bid above our fair
             b1 = min(b1, rt(fair - mh, True))
+            if sig < 2:  # range locked (wind can't reach session max/min): offer just above floor
+                a1 = max(rt(self.sell_floor(prod), False), bb + tick)
         nc = self.model.get('nowcast', {}).get(prod)
         if nc is not None and p.get('nowcast_guard', True):  # never trade through our short-term fair
             b1 = min(b1, rt(nc + mh, True) if prod != '4_ETF' else b1)
