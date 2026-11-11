@@ -11,12 +11,15 @@ Tweak live:   edit params.json (reloaded every cycle)
 import os
 import threading
 import time
+from dataclasses import asdict
+
+import requests
 from datetime import datetime
 from pathlib import Path
 
 from base_bot import BaseBot
 from fair import TZ, compute_fair
-from models import OrderBook, OrderRequest, Side, Trade
+from models import OrderBook, OrderRequest, OrderResponse, Side, Trade
 
 URL = os.environ.get('CMI_URL', 'https://gamma.cmi-exch.com')
 DRY = os.environ.get('DRY') == '1'
@@ -44,6 +47,21 @@ class TeamBot(BaseBot):
         self.books = {}
         self.last_take = {}
         self.lock = threading.Lock()
+
+    # keep-alive session: ~75ms per request instead of a new TLS handshake each time
+    _S = requests.Session()
+
+    def send_order(self, o: OrderRequest):
+        payload = {k: v for k, v in asdict(o).items() if v is not None}
+        r = self._S.post(f'{URL}/api/order', json=payload, headers=self._get_headers(), timeout=5)
+        if r.status_code == 200:
+            return OrderResponse(**r.json())
+        print(f'{ts()} order rejected {o}: {r.text[:200]}', flush=True)
+
+    def cancel_all_orders(self):
+        r = self._S.get(f'{URL}/api/order/current-user', headers=self._get_headers(), timeout=5)
+        for o in (r.json() if r.ok else []):
+            self._S.delete(f"{URL}/api/order/{o['id']}", headers=self._get_headers(), timeout=5)
 
     def _register_bot(self):
         pass  # never auto-register a new account (rules: one login per team)

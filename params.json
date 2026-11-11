@@ -25,7 +25,7 @@
     "2_CO2": 0,
     "3_FLOW": 0,
     "4_ETF": 0,
-    "5_WIND_RANGE": 0
+    "5_WIND_RANGE": 40
   },
   "disabled_products": [],
   "_research": "15:12 research: FLOW imports rise into evening (+150 to settle, strongest signal); WIND/CO2 no drift; wind forecast badly low today; range right-skewed, median settle ~113 mean ~180 -> do not short range cheaply"
