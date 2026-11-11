@@ -147,7 +147,7 @@ class TeamBot(BaseBot):
                 continue
             half = max(p['quote_k'] * self.model['sigma'][prod], p['min_take_edge'][prod] * 1.5)
             pos, lim, q = self.pos.get(prod, 0), p['max_pos'], p['quote_size']
-            skew = half * pos / lim  # long -> lower quotes to shed inventory
+            skew = half * max(-1.0, min(1.0, pos / lim))  # long -> lower quotes; clamped so we never quote through fair
             bid, ask = round(fair - half - skew), round(fair + half - skew)
             if prod == '5_WIND_RANGE':
                 ask = max(ask, round(self.model['range_floor'] + p['min_take_edge'][prod]))

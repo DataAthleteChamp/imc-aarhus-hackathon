@@ -27,6 +27,15 @@ PRODUCTS = ['1_WIND', '2_CO2', '3_FLOW', '4_ETF', '5_WIND_RANGE']
 TYPICAL_15 = {'1_WIND': 14, '2_CO2': 24, '3_FLOW': 31, '4_ETF': 41, '5_WIND_RANGE': 5.7}
 
 
+# (start minute-of-day, take_k, max_pos, min_take_edge) - from research/endgame backtest
+ENDGAME_SCHEDULE = [
+    (17 * 60 + 20, 1.0, 90, {'1_WIND': 6, '2_CO2': 12, '3_FLOW': 10, '4_ETF': 15}),
+    (17 * 60 + 30, 0.8, 98, {'1_WIND': 4, '2_CO2': 8, '3_FLOW': 6, '4_ETF': 10}),
+    (17 * 60 + 38, 0.6, 98, {'1_WIND': 2, '2_CO2': 5, '3_FLOW': 4, '4_ETF': 6}),
+    (17 * 60 + 42, 0.5, 98, {'1_WIND': 1.5, '2_CO2': 4, '3_FLOW': 3, '4_ETF': 5}),
+]
+
+
 def load_params():
     return json.loads(PARAMS_FILE.read_text())
 
@@ -144,6 +153,25 @@ def compute_fair(now=None):
             floor = rfloor
         except Exception as e:
             print('research model failed, using baseline:', repr(e))
+    # ---- endgame (from 17:20): minute-level model + aggressive schedule ----
+    if now >= today_at(17, 20, now) and p.get('endgame_enabled', True):
+        try:
+            import endgame
+            eg = endgame.endgame_fair(rows, now)
+            adj = p['manual_adj']
+            for prod in PRODUCTS:
+                if prod in eg:
+                    fair[prod] = eg[prod][0] + adj.get(prod, 0.0)
+                    sigma[prod] = max(eg[prod][1], 0.5)
+            floor = eg.get('_range_floor', floor)
+            p = dict(p)
+            hm = now.hour * 60 + now.minute
+            for start, tk, mp, me in ENDGAME_SCHEDULE:
+                if hm >= start:
+                    p['take_k'], p['max_pos'] = tk, mp
+                    p['min_take_edge'] = {**p['min_take_edge'], **me}
+        except Exception as e:
+            print('endgame model failed:', repr(e))
     return {'fair': fair, 'sigma': sigma, 'range_floor': floor,
             'data_time': rows[-1]['t'].strftime('%H:%M'), 'mins_left': mins_left, 'params': p}
 
