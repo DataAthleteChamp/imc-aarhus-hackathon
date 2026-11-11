@@ -383,12 +383,19 @@ class Bot2(BaseBot):
         # only penny when the spread is wide enough to keep >= min_half each side; else join best
         penny = tick if (ba - bb) >= 2 * mh + 2 * tick else 0
         target = max(-lim, min(lim, lim * p['alpha_k'] * (fair - center) / max(sig, 1)))
-        dev = (pos - target) / lim                       # >0: too long vs target -> lean to sell
+        dev = max(-1.0, min(1.0, (pos - target) / lim))  # >0: too long vs target -> lean to sell (clamped)
         c = center - p['spread_skew'] * max(mh, (ba - bb) / 2) * dev
         b1 = min(bb + penny, rt(c - mh, True), ba - tick)
         a1 = max(ba - penny, rt(c + mh, False), bb + tick)
-        b1 = min(b1, rt(fair + 0.25 * sig, True))          # never pay well above long-term fair
-        a1 = max(a1, rt(fair - 0.25 * sig, False), rt(self.sell_floor(prod), False))
+        gk = p.get('guard_k')
+        if gk is not None:  # long-term fair guard (off in risk-off mode)
+            b1 = min(b1, rt(fair + gk * sig, True))
+            a1 = max(a1, rt(fair - gk * sig, False))
+        a1 = max(a1, rt(self.sell_floor(prod), False))
+        nc = self.model.get('nowcast', {}).get(prod)
+        if nc is not None and p.get('nowcast_guard', True):  # never trade through our short-term fair
+            b1 = min(b1, rt(nc + mh, True) if prod != '4_ETF' else b1)
+            a1 = max(a1, rt(nc - mh, False) if prod != '4_ETF' else a1)
         size = p['mm_size']
         bsz = size if pos < target else max(1, int(round(size * max(0.0, 1 - abs(dev)))))
         asz = size if pos > target else max(1, int(round(size * max(0.0, 1 - abs(dev)))))
