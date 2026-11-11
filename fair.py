@@ -47,6 +47,12 @@ def fetch_rows(now):
     try:
         rows = _fetch_rows(now)
         _CACHE.update(t=time.time(), rows=rows)
+        try:  # share with research scripts so they don't hit Energinet's per-IP rate limit
+            (_HERE / 'data' / 'live_rows.json').write_text(json.dumps(
+                {'fetched_at': datetime.now(TZ).isoformat(),
+                 'rows': [{**r, 't': r['t'].isoformat()} for r in rows]}))
+        except Exception:
+            pass
         return rows
     except Exception as e:
         if _CACHE['rows']:
