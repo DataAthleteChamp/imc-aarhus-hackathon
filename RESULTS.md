@@ -1,6 +1,9 @@
 # Results: IMC Aarhus Trading Hackathon (11 Nov 2026)
 
-**Final (our calculation): ~+9,879, all 5 products positive. Estimated 2nd on points.**
+**Official: 2nd place on points, P&L +13,789.1 (exchange dashboard), all 5 products positive.**
+
+Exchange per-product P&L at close: WIND +121.6, CO2 +1,511.9, FLOW +4,229.5, ETF +2,378.5, WIND_RANGE +5,547.6.
+The table below is our own settlement-price calculation, which differs from the exchange's marking.
 
 | Product | Settle (avg 17:40–17:44) | Final pos | PnL |
 |---|---|---|---|

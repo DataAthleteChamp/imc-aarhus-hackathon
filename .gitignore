@@ -8,3 +8,7 @@ __pycache__/
 nohup.out
 data/*.jsonl
 data/*.csv
+research/**/trades.json
+research/**/*cache*
+research/**/*.pkl
+*.log
