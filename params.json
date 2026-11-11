@@ -28,7 +28,6 @@
     "5_WIND_RANGE": 0
   },
   "disabled_products": [
-    "2_CO2",
     "5_WIND_RANGE"
   ],
   "_research": "15:12 research: FLOW imports rise into evening (+150 to settle, strongest signal); WIND/CO2 no drift; wind forecast badly low today; range right-skewed, median settle ~113 mean ~180 -> do not short range cheaply",
@@ -40,7 +39,7 @@
   "alpha_k": 0.0,
   "spread_skew": 1.0,
   "mm_size": 2,
-  "_mode": "16:25 RISK-OFF (replay: live cfg -605, wider/vol-aware best). cap 10, MM only WIND/ETF/FLOW-unwind, no takes, nowcast guard",
+  "_mode": "16:32 gap-taker (live stats + 47d backtest A-peek 0% losing days; FLOW off) + risk-off MM cap 10; endgame 17:20 capped 50",
   "mm_min_half": {
     "1_WIND": 6,
     "2_CO2": 8,
@@ -51,5 +50,20 @@
   "_mm_research": "16:15 markout: pizzatrading informed (+18/u at 60s), trades in Energinet publish window; house_mm noise. min_half/size per research, widen x2 sec 50..25, penny only if spread>=2*min_half, take_k 3 (our takes lost -20/u)",
   "guard_k": null,
   "nowcast_guard": true,
-  "arb_enabled": false
+  "arb_enabled": false,
+  "gap_enabled": true,
+  "gap_thr": {
+    "1_WIND": 6,
+    "2_CO2": 10,
+    "4_ETF": 24
+  },
+  "gap_max": {
+    "1_WIND": 40,
+    "2_CO2": 80,
+    "4_ETF": 50
+  },
+  "gap_cap": 30,
+  "gap_size": 3,
+  "gap_cooldown": 3.0,
+  "etf_max_pos": 10
 }

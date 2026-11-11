@@ -34,6 +34,8 @@ DEFAULTS = {'mm_enabled': True, 'quote_edge_k': 0.5, 'ladder_step': 0.25, 'skew_
             'arb_edge': 6, 'arb_enabled': True, 'mm_size': 5, 'take_cooldown': 0.5,
             'release_from_sec': 50, 'release_to_sec': 25, 'release_widen': 2.0,
             'center_actual_w': {'1_WIND': 0.6, '2_CO2': 0.7, '3_FLOW': 0.6, '4_ETF': 0.6}, 'center_max_shift': 30,
+            'gap_enabled': True, 'gap_thr': {'1_WIND': 5, '2_CO2': 10, '4_ETF': 20},
+            'gap_max': {'4_ETF': 50, '2_CO2': 80, '1_WIND': 40}, 'gap_cap': 20, 'gap_size': 3, 'gap_cooldown': 3.0,
             'mm_mode': 'spread', 'alpha_k': 0.5, 'spread_skew': 1.0,
             'mm_min_half': {'1_WIND': 2, '2_CO2': 4, '3_FLOW': 5, '4_ETF': 6, '5_WIND_RANGE': 2},
             'etf_max_pos': 40, 'etf_model_from': '17:30', 'etf_nav_sigma': 12,
@@ -91,6 +93,7 @@ class Bot2(BaseBot):
         self.om = OrderManager.login(URL, user, pw, verbose=True)
         self.model = None
         self.books = {}
+        self.last_gap = {}
         self.last_take = {}
         self.last_quote = {}
         self.last_arb = 0.0
@@ -194,7 +197,38 @@ class Bot2(BaseBot):
                 cp = t.seller if side == 'BOUGHT' else t.buyer
                 log(f'FILL {side} {t.volume:g} {t.product} @ {t.price:g} vs {cp}')
 
+    def _gap_take(self, prod):
+        """Lagged-market taker: market mid follows Energinet ~2 min late. Take the touch when the latest
+        published value (nowcast for CO2) is beyond it by > gap_thr. Live stats 16:11-16:25: CO2 |g|>10
+        98% hit EV +9..+33/u; WIND |g|>5 100% EV +3..+16; ETF 20<|g|<50 EV +15 @120s; FLOW negative."""
+        p = self.p()
+        thr = p['gap_thr'].get(prod)
+        ob = self.books.get(prod)
+        if thr is None or ob is None or not p['trading_enabled'] or not p['gap_enabled']:
+            return False
+        if time.time() - self.last_gap.get(prod, 0) < p['gap_cooldown']:
+            return False
+        src = self.model.get('nowcast' if prod == '2_CO2' else 'actual', {})
+        val = src.get(prod)
+        if val is None:
+            return False
+        bids, asks = self._levels(ob)
+        pos, cap, sz = self.om.position(prod), p['gap_cap'], p['gap_size']
+        gmax = p['gap_max'].get(prod, 1e9)
+        side = None
+        if asks and thr < val - asks[0][0] < gmax and pos < cap:
+            side, px, v = 'BUY', asks[0][0], min(sz, asks[0][1], cap - pos)
+        elif bids and thr < bids[0][0] - val < gmax and pos > -cap:
+            side, px, v = 'SELL', bids[0][0], min(sz, bids[0][1], cap + pos)
+        if side is None or v <= 0:
+            return False
+        self.last_gap[prod] = time.time()
+        self._do_take(prod, side, px, v, f'GAP(val {val:.1f} thr {thr})')
+        self.last_quote[prod] = 0
+        return True
+
     def _on_book(self, prod):
+        self._gap_take(prod)
         if not self.enabled(prod):
             return
         now = time.time()
