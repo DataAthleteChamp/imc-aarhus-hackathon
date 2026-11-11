@@ -370,7 +370,7 @@ class Bot2(BaseBot):
         fs = fair - p['skew_k'] * sig * pos / lim       # long -> both sides lower
         step = max(tick, p['ladder_step'] * sig)
         bids, asks = self._levels(ob)
-        size = p['mm_size']
+        size = p['mm_size'].get(prod, 3) if isinstance(p['mm_size'], dict) else p['mm_size']
         shrink = max(0.0, 1 - abs(pos) / lim)
         bsz = size if pos < 0 else int(round(size * shrink))   # side that adds inventory shrinks
         asz = size if pos > 0 else int(round(size * shrink))
@@ -436,7 +436,8 @@ class Bot2(BaseBot):
         # window (sec ~50 -> ~25 of next minute) -> widen there
         sec = datetime.now(TZ).second
         if sec >= p['release_from_sec'] or sec < p['release_to_sec']:
-            mh *= p['release_widen']
+            rw = p['release_widen']
+            mh *= rw.get(prod, 1.0) if isinstance(rw, dict) else rw
         # only penny when the spread is wide enough to keep >= min_half each side; else join best
         penny = tick if (ba - bb) >= 2 * mh + 2 * tick else 0
         target = max(-lim, min(lim, lim * p['alpha_k'] * (fair - center) / max(sig, 1)))
@@ -453,7 +454,7 @@ class Bot2(BaseBot):
         if nc is not None and p.get('nowcast_guard', True):  # never trade through our short-term fair
             b1 = min(b1, rt(nc + mh, True) if prod != '4_ETF' else b1)
             a1 = max(a1, rt(nc - mh, False) if prod != '4_ETF' else a1)
-        size = p['mm_size']
+        size = p['mm_size'].get(prod, 3) if isinstance(p['mm_size'], dict) else p['mm_size']
         bsz = size if pos < target else max(1, int(round(size * max(0.0, 1 - abs(dev)))))
         asz = size if pos > target else max(1, int(round(size * max(0.0, 1 - abs(dev)))))
         out = []

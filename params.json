@@ -35,14 +35,20 @@
   "take_cooldown": 0.2,
   "mm_mode": "spread",
   "alpha_k": 0.0,
-  "spread_skew": 1.0,
-  "mm_size": 3,
-  "_mode": "17:06 noise bot making_markets (markout -7.4/u) -> mm_size 3, range on (ask>=floor+edge), cap 10, gap unchanged",
+  "spread_skew": 2.0,
+  "mm_size": {
+    "1_WIND": 5,
+    "2_CO2": 3,
+    "3_FLOW": 5,
+    "4_ETF": 5,
+    "5_WIND_RANGE": 3
+  },
+  "_mode": "17:09 bot-regime replay (16:58-17:07): WIND/FLOW/ETF tuned (beat live both fill models), CO2 MM unchanged (exit for gap inventory)",
   "mm_min_half": {
-    "1_WIND": 6,
+    "1_WIND": 3,
     "2_CO2": 8,
-    "3_FLOW": 6,
-    "4_ETF": 14,
+    "3_FLOW": 9,
+    "4_ETF": 7,
     "5_WIND_RANGE": 6
   },
   "_mm_research": "16:15 markout: pizzatrading informed (+18/u at 60s), trades in Energinet publish window; house_mm noise. min_half/size per research, widen x2 sec 50..25, penny only if spread>=2*min_half, take_k 3 (our takes lost -20/u)",
@@ -74,5 +80,12 @@
   },
   "max_pos_override": {
     "3_FLOW": 40
+  },
+  "release_widen": {
+    "1_WIND": 1.0,
+    "2_CO2": 2.0,
+    "3_FLOW": 1.0,
+    "4_ETF": 1.0,
+    "5_WIND_RANGE": 2.0
   }
 }
