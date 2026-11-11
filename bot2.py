@@ -32,6 +32,8 @@ PRODUCTS = ['1_WIND', '2_CO2', '3_FLOW', '4_ETF', '5_WIND_RANGE']
 LEGS = ['1_WIND', '2_CO2', '3_FLOW']
 DEFAULTS = {'mm_enabled': True, 'quote_edge_k': 0.5, 'ladder_step': 0.25, 'skew_k': 0.5,
             'arb_edge': 6, 'arb_enabled': True, 'mm_size': 5, 'take_cooldown': 0.5,
+            'etf_max_pos': 40, 'etf_model_from': '17:30', 'etf_nav_sigma': 12,
+            'nav_max_spread': {'1_WIND': 25, '2_CO2': 50, '3_FLOW': 60},
             'quote_throttle': 1.0, 'jump_k': 0.3, 'anchor_k': 0.1}
 
 
@@ -107,7 +109,41 @@ class Bot2(BaseBot):
 
     def take_edge(self, prod):
         p = self.p()
-        return max(p['min_take_edge'][prod], p['take_k'] * self.model['sigma'][prod])
+        return max(p['min_take_edge'][prod], p['take_k'] * self.fair_sigma(prod)[1])
+
+    # ---- ETF priced like an industry ETF market maker: off the LIVE component prices (iNAV),
+    # not off our own view (our view is already expressed in the components; doubling it in ETF
+    # is what lost money in the practice round). Model fair takes over in the endgame.
+    def etf_nav(self):
+        p = self.p()
+        nav, half = 0.0, 0.0
+        for leg in LEGS:
+            ob = self.books.get(leg)
+            if ob is None or not ob.buy_orders or not ob.sell_orders:
+                return None
+            b, a = ob.buy_orders[0].price, ob.sell_orders[0].price
+            if a - b > p['nav_max_spread'][leg]:
+                return None
+            nav += (a + b) / 2
+            half += (a - b) / 2
+        return nav, half
+
+    def fair_sigma(self, prod):
+        f, s = self.model['fair'][prod], self.model['sigma'][prod]
+        if prod != '4_ETF':
+            return f, s
+        p = self.p()
+        hm = datetime.now(TZ).strftime('%H:%M')
+        if hm >= p['etf_model_from']:
+            return f, s
+        nav = self.etf_nav()
+        if nav is None:
+            return f, max(s, 1e9)  # no reliable iNAV -> never take/quote ETF on model alone
+        return nav[0], max(nav[1], p['etf_nav_sigma'])
+
+    def lim(self, prod):
+        p = self.p()
+        return p['etf_max_pos'] if prod == '4_ETF' else p['max_pos']
 
     def sell_floor(self, prod):
         if prod == '5_WIND_RANGE':
@@ -180,8 +216,8 @@ class Bot2(BaseBot):
         ob = self.books.get(prod)
         if ob is None:
             return False
-        p, fair, edge = self.p(), self.model['fair'][prod], self.take_edge(prod)
-        pos, lim = self.om.position(prod), p['max_pos']
+        p, fair, edge = self.p(), self.fair_sigma(prod)[0], self.take_edge(prod)
+        pos, lim = self.om.position(prod), self.lim(prod)
         bids, asks = self._levels(ob)
         if asks and asks[0][0] < fair - edge and pos < lim:
             vol, px = 0, asks[0][0]
@@ -251,14 +287,16 @@ class Bot2(BaseBot):
         ob = self.books.get(prod)
         if ob is None or not p['mm_enabled'] or not self.enabled(prod):
             return []
-        fair, sig = self.model['fair'][prod], self.model['sigma'][prod]
+        fair, sig = self.fair_sigma(prod)
+        if sig > 1e8:
+            return []
         # hysteresis: model fair jitters each recompute; only move quotes when it moves > anchor_k*sigma
         a = self.anchor.get(prod)
         if a is None or abs(fair - a[0]) > p['anchor_k'] * sig or abs(sig - a[1]) > 0.1 * a[1]:
             self.anchor[prod] = a = (fair, sig)
         fair, sig = a
         tick = ob.tick_size or 1
-        pos, lim = self.om.position(prod), p['max_pos']
+        pos, lim = self.om.position(prod), self.lim(prod)
         edge = max(p['min_take_edge'][prod], p['quote_edge_k'] * sig)
         fs = fair - p['skew_k'] * sig * pos / lim       # long -> both sides lower
         step = max(tick, p['ladder_step'] * sig)
