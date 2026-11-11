@@ -29,10 +29,10 @@ TYPICAL_15 = {'1_WIND': 14, '2_CO2': 24, '3_FLOW': 31, '4_ETF': 41, '5_WIND_RANG
 
 # (start minute-of-day, take_k, max_pos, min_take_edge) - from research/endgame backtest
 ENDGAME_SCHEDULE = [
-    (17 * 60 + 20, 1.0, 50, {'1_WIND': 6, '2_CO2': 12, '3_FLOW': 10, '4_ETF': 15}),
-    (17 * 60 + 30, 0.8, 50, {'1_WIND': 4, '2_CO2': 8, '3_FLOW': 6, '4_ETF': 10}),
-    (17 * 60 + 38, 0.6, 50, {'1_WIND': 2, '2_CO2': 5, '3_FLOW': 4, '4_ETF': 6}),
-    (17 * 60 + 42, 0.5, 50, {'1_WIND': 1.5, '2_CO2': 4, '3_FLOW': 3, '4_ETF': 5}),
+    (17 * 60 + 20, 1.0, 60, {'1_WIND': 6, '2_CO2': 12, '3_FLOW': 10, '4_ETF': 15}),
+    (17 * 60 + 30, 0.8, 80, {'1_WIND': 4, '2_CO2': 8, '3_FLOW': 6, '4_ETF': 10}),
+    (17 * 60 + 38, 0.6, 80, {'1_WIND': 2, '2_CO2': 5, '3_FLOW': 4, '4_ETF': 6}),
+    (17 * 60 + 42, 0.5, 80, {'1_WIND': 1.5, '2_CO2': 4, '3_FLOW': 3, '4_ETF': 5}),
 ]
 
 
@@ -179,6 +179,7 @@ def compute_fair(now=None):
             for start, tk, mp, me in ENDGAME_SCHEDULE:
                 if hm >= start:
                     p['take_k'], p['max_pos'] = tk, mp
+                    p['etf_max_pos'] = max(p.get('etf_max_pos', 10), p.get('endgame_etf_cap', 30))
                     p['min_take_edge'] = {**p['min_take_edge'], **me}
         except Exception as e:
             print('endgame model failed:', repr(e))
