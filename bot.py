@@ -131,7 +131,8 @@ class TeamBot(BaseBot):
 
     # ---------- periodic ----------
     def refresh_positions(self):
-        pos = self.request_net_positions()
+        r = self._S.get(f'{URL}/api/position/current-user', headers=self._get_headers(), timeout=5)
+        pos = {x['product']: x['netPosition'] for x in r.json()} if r.ok else None
         if pos is not None:
             with self.lock:
                 self.pos = pos

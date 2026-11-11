@@ -5,3 +5,4 @@ __pycache__/
 logs/
 data/*.json
 __pycache__/
+nohup.out

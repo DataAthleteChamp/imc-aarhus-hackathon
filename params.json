@@ -27,7 +27,9 @@
     "4_ETF": 0,
     "5_WIND_RANGE": 0
   },
-  "disabled_products": [],
+  "disabled_products": [
+    "5_WIND_RANGE"
+  ],
   "_research": "15:12 research: FLOW imports rise into evening (+150 to settle, strongest signal); WIND/CO2 no drift; wind forecast badly low today; range right-skewed, median settle ~113 mean ~180 -> do not short range cheaply",
   "model": "research",
   "_note2": "model=research uses research/*/model_*.py (drift already inside); drift_per_hour only used when model=baseline"
