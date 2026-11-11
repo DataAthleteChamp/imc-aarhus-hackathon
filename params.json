@@ -27,9 +27,7 @@
     "4_ETF": 0,
     "5_WIND_RANGE": 0
   },
-  "disabled_products": [
-    "5_WIND_RANGE"
-  ],
+  "disabled_products": [],
   "_research": "15:12 research: FLOW imports rise into evening (+150 to settle, strongest signal); WIND/CO2 no drift; wind forecast badly low today; range right-skewed, median settle ~113 mean ~180 -> do not short range cheaply",
   "model": "research",
   "_note2": "model=research uses research/*/model_*.py (drift already inside); drift_per_hour only used when model=baseline",
@@ -38,14 +36,14 @@
   "mm_mode": "spread",
   "alpha_k": 0.0,
   "spread_skew": 1.0,
-  "mm_size": 2,
-  "_mode": "16:57 CO2 gap size 10 (wave4: lag1 +889/day); FLOW hold 36 to endgame (cap 40, wave4: hold EV 4x sell); ETF flatten",
+  "mm_size": 3,
+  "_mode": "17:06 noise bot making_markets (markout -7.4/u) -> mm_size 3, range on (ask>=floor+edge), cap 10, gap unchanged",
   "mm_min_half": {
     "1_WIND": 6,
     "2_CO2": 8,
     "3_FLOW": 6,
     "4_ETF": 14,
-    "5_WIND_RANGE": 2
+    "5_WIND_RANGE": 6
   },
   "_mm_research": "16:15 markout: pizzatrading informed (+18/u at 60s), trades in Energinet publish window; house_mm noise. min_half/size per research, widen x2 sec 50..25, penny only if spread>=2*min_half, take_k 3 (our takes lost -20/u)",
   "guard_k": null,
