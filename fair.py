@@ -168,9 +168,12 @@ def compute_fair(now=None):
             import endgame
             eg = endgame.endgame_fair(rows, now)
             adj = p['manual_adj']
+            pre = dict(fair)  # research/hybrid fair before endgame override
+            bw = p.get('endgame_blend', {})  # weight on pre-endgame model (0 = pure endgame)
             for prod in PRODUCTS:
                 if prod in eg:
-                    fair[prod] = eg[prod][0] + adj.get(prod, 0.0)
+                    w = bw.get(prod, 0.0)
+                    fair[prod] = (1 - w) * eg[prod][0] + w * pre[prod] + adj.get(prod, 0.0)
                     # calibration (research/yesterday/calib.py, 12 days): CO2/ETF overconfident near 17:40
                     sigma[prod] = max(eg[prod][1], 0.5) * p.get('endgame_sigma_mult', {}).get(prod, 1.0)
             floor = eg.get('_range_floor', floor)
