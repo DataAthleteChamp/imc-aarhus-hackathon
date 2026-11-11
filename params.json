@@ -1,7 +1,7 @@
 {
   "_note": "Hot-reloaded every cycle. Edit while the bot runs. drift_per_hour = expected change per hour until 17:40 (product units).",
   "trading_enabled": true,
-  "max_pos": 90,
+  "max_pos": 98,
   "take_k": 1.0,
   "min_take_edge": {
     "1_WIND": 4,
@@ -10,7 +10,7 @@
     "4_ETF": 12,
     "5_WIND_RANGE": 3
   },
-  "take_clip": 10,
+  "take_clip": 50,
   "quote_k": 1.5,
   "quote_size": 3,
   "sigma_mult": 1.0,
@@ -27,11 +27,10 @@
     "4_ETF": 0,
     "5_WIND_RANGE": 0
   },
-  "disabled_products": [
-    "5_WIND_RANGE"
-  ],
+  "disabled_products": [],
   "_research": "15:12 research: FLOW imports rise into evening (+150 to settle, strongest signal); WIND/CO2 no drift; wind forecast badly low today; range right-skewed, median settle ~113 mean ~180 -> do not short range cheaply",
   "model": "research",
   "_note2": "model=research uses research/*/model_*.py (drift already inside); drift_per_hour only used when model=baseline",
-  "_backtest": "15:35 hybrid (research WIND/CO2, baseline FLOW drift 90) since 25 Oct: mean +29k/day, all products positive mean, 11.8% losing days"
+  "_backtest": "15:35 hybrid (research WIND/CO2, baseline FLOW drift 90) since 25 Oct: mean +29k/day, all products positive mean, 11.8% losing days",
+  "take_cooldown": 0.2
 }
