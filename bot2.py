@@ -33,7 +33,7 @@ LEGS = ['1_WIND', '2_CO2', '3_FLOW']
 DEFAULTS = {'mm_enabled': True, 'quote_edge_k': 0.5, 'ladder_step': 0.25, 'skew_k': 0.5,
             'arb_edge': 6, 'arb_enabled': True, 'mm_size': 5, 'take_cooldown': 0.5,
             'release_from_sec': 50, 'release_to_sec': 25, 'release_widen': 2.0,
-            'center_actual_w': {'1_WIND': 0.5, '2_CO2': 0.5, '3_FLOW': 0.5}, 'center_max_shift': 30,
+            'center_actual_w': {'1_WIND': 0.6, '2_CO2': 0.7, '3_FLOW': 0.6, '4_ETF': 0.6}, 'center_max_shift': 30,
             'mm_mode': 'spread', 'alpha_k': 0.5, 'spread_skew': 1.0,
             'mm_min_half': {'1_WIND': 2, '2_CO2': 4, '3_FLOW': 5, '4_ETF': 6, '5_WIND_RANGE': 2},
             'etf_max_pos': 40, 'etf_model_from': '17:30', 'etf_nav_sigma': 12,
@@ -367,12 +367,12 @@ class Bot2(BaseBot):
             return []
         bb, ba = bids[0][0], asks[0][0]
         mid = (bb + ba) / 2
-        center = fair if prod == '4_ETF' and sig < 50 else mid     # ETF: iNAV-based fair
+        center = mid
         # fair value beyond mid: pull the centre toward the latest Energinet value (the market lags it;
         # informed traders pick off quotes centred on a stale mid)
-        act = self.model.get('actual', {}).get(prod)
+        act = self.model.get('nowcast', {}).get(prod, self.model.get('actual', {}).get(prod))
         w = p['center_actual_w'].get(prod, 0.0)
-        if act is not None and w > 0 and prod != '4_ETF':
+        if act is not None and w > 0:
             center = mid + w * max(-p['center_max_shift'], min(p['center_max_shift'], act - mid))
         mh = p['mm_min_half'][prod]
         # adverse selection (Glosten-Milgrom): informed flow clusters around the Energinet publish

@@ -178,10 +178,24 @@ def compute_fair(now=None):
                     p['min_take_edge'] = {**p['min_take_edge'], **me}
         except Exception as e:
             print('endgame model failed:', repr(e))
+    # ---- nowcast: market trades the last PUBLISHED minute (~2 min stale). Predict the
+    # not-yet-published minutes with AR(1) on 1-min changes, fitted live on the last 60 min.
+    nowcast = {}
+    h = p.get('nowcast_horizon', 2)
+    for prod in ['1_WIND', '2_CO2', '3_FLOW']:
+        x = np.array([r[prod] for r in rows[-61:]])
+        d = np.diff(x)
+        if len(d) > 10:
+            phi = float(np.clip(np.corrcoef(d[:-1], d[1:])[0, 1], -0.5, 0.9))
+            last = float(np.mean(d[-2:]))  # smooth the last change a bit
+            nowcast[prod] = float(x[-1] + last * sum(phi ** k for k in range(1, h + 1)))
+        else:
+            nowcast[prod] = rows[-1][prod]
+    nowcast['4_ETF'] = nowcast['1_WIND'] + nowcast['2_CO2'] + nowcast['3_FLOW']
     lr = rows[-1]
     actual = {'1_WIND': lr['1_WIND'], '2_CO2': lr['2_CO2'], '3_FLOW': lr['3_FLOW'],
               '4_ETF': lr['1_WIND'] + lr['2_CO2'] + lr['3_FLOW'], '5_WIND_RANGE': floor}
-    return {'fair': fair, 'sigma': sigma, 'range_floor': floor, 'actual': actual,
+    return {'fair': fair, 'sigma': sigma, 'range_floor': floor, 'actual': actual, 'nowcast': nowcast,
             'data_time': rows[-1]['t'].strftime('%H:%M'), 'mins_left': mins_left, 'params': p}
 
 
