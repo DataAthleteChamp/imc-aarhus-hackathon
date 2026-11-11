@@ -42,7 +42,7 @@ _CACHE = {'t': 0.0, 'rows': None}
 def fetch_rows(now):
     """Energinet rate-limits (~1 req / 30 s, HTTP 429): cache and reuse on error."""
     import time
-    if _CACHE['rows'] and time.time() - _CACHE['t'] < 30:
+    if _CACHE['rows'] and time.time() - _CACHE['t'] < 15:
         return _CACHE['rows']
     try:
         rows = _fetch_rows(now)
