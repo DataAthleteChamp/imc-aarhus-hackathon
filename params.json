@@ -10,7 +10,7 @@
     "4_ETF": 12,
     "5_WIND_RANGE": 3
   },
-  "take_clip": 10,
+  "take_clip": 30,
   "quote_k": 1.5,
   "quote_size": 3,
   "sigma_mult": 1.0,
@@ -43,7 +43,7 @@
     "4_ETF": 5,
     "5_WIND_RANGE": 3
   },
-  "_mode": "17:09 bot-regime replay (16:58-17:07): WIND/FLOW/ETF tuned (beat live both fill models), CO2 MM unchanged (exit for gap inventory)",
+  "_mode": "17:20 endgame: take_clip 30 so the final known-minute mispricings get swept fast (cap 98)",
   "mm_min_half": {
     "1_WIND": 3,
     "2_CO2": 8,
