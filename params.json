@@ -18,7 +18,7 @@
   "drift_per_hour": {
     "1_WIND": 2,
     "2_CO2": 0,
-    "3_FLOW": 60
+    "3_FLOW": 90
   },
   "manual_adj": {
     "1_WIND": 0,
@@ -32,5 +32,6 @@
   ],
   "_research": "15:12 research: FLOW imports rise into evening (+150 to settle, strongest signal); WIND/CO2 no drift; wind forecast badly low today; range right-skewed, median settle ~113 mean ~180 -> do not short range cheaply",
   "model": "research",
-  "_note2": "model=research uses research/*/model_*.py (drift already inside); drift_per_hour only used when model=baseline"
+  "_note2": "model=research uses research/*/model_*.py (drift already inside); drift_per_hour only used when model=baseline",
+  "_backtest": "15:35 hybrid (research WIND/CO2, baseline FLOW drift 90) since 25 Oct: mean +29k/day, all products positive mean, 11.8% losing days"
 }

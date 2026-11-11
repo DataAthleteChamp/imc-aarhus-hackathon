@@ -130,10 +130,10 @@ def compute_fair(now=None):
             ff, sf = MFC.flow_fair(rows, now)
             rf, rs, rfloor = MW.range_fair(rows, now)
             fair.update({'1_WIND': fw + adj['1_WIND'], '2_CO2': fc + adj['2_CO2'],
-                         '3_FLOW': ff + adj['3_FLOW'], '5_WIND_RANGE': rf + adj['5_WIND_RANGE']})
+                         '5_WIND_RANGE': rf + adj['5_WIND_RANGE']})  # 3_FLOW: baseline+drift (won backtest)
             fair['4_ETF'] = fair['1_WIND'] + fair['2_CO2'] + fair['3_FLOW'] + adj['4_ETF']
             sm = p['sigma_mult']
-            sigma.update({'1_WIND': sw * sm, '2_CO2': sc * sm, '3_FLOW': sf * sm,
+            sigma.update({'1_WIND': sw * sm, '2_CO2': sc * sm,
                           '4_ETF': MFC.etf_sigma(sw, sc, sf, now) * sm, '5_WIND_RANGE': max(rs, 1.0) * sm})
             floor = rfloor
         except Exception as e:
