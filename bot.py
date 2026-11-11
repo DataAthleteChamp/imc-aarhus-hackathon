@@ -176,6 +176,8 @@ class TeamBot(BaseBot):
 
 
 def main():
+    import signal
+    signal.signal(signal.SIGTERM, signal.default_int_handler)  # kill -TERM -> clean shutdown
     load_env()
     bot = TeamBot(URL, os.environ['CMI_USER'], os.environ['CMI_PASS'])
     bot.model = compute_fair()
