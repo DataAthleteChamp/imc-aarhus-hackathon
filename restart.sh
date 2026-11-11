@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# Stop any running bot (clean: cancels its orders) and start exactly one new one.
+# Stop ANY running bot (bot.py or bot2.py; clean shutdown cancels orders) and start exactly one.
+# Usage: ./restart.sh [bot2.py|bot.py]   (default bot2.py)
 cd "$(dirname "$0")"
-pkill -TERM -f -- "-u bot.py"; sleep 5; pkill -KILL -f -- "-u bot.py"
-nohup .venv/bin/python -u bot.py >> bot.log 2>&1 &
-sleep 2; pgrep -fl -- "-u bot.py"; true
+BOT="${1:-bot2.py}"
+pkill -TERM -f -- "-u bot2?.py"; sleep 5; pkill -KILL -f -- "-u bot2?.py"
+nohup .venv/bin/python -u "$BOT" >> "${BOT%.py}.log" 2>&1 &
+sleep 2; pgrep -fl -- "-u bot"; true
